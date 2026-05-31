@@ -1,0 +1,31 @@
+The Money Toolkit
+Copyright (c) 2026 Hustle&Handoff. All Rights Reserved.
+
+PERSONAL USE LICENSE
+
+This software and its bundled calculators (the "Toolkit") are the property of
+Hustle&Handoff and are licensed, not sold, for personal use only.
+
+YOU MAY:
+  - Use the Toolkit for your own personal or household budgeting and planning,
+    indefinitely.
+  - Use it on devices you personally own.
+  - Customize category names, labels, and themes for your own use.
+  - Export your own data.
+
+YOU MAY NOT:
+  - Resell, gift, sublicense, or redistribute the Toolkit or its files.
+  - Share access links publicly or repost the files elsewhere online.
+  - Claim the Toolkit or any part of it as your own creation.
+  - Use the Toolkit for any commercial purpose, paid service, or client
+    deliverable.
+  - List or upload it to any marketplace (Etsy, Gumroad, Creative Market, etc.).
+
+NO WARRANTY:
+  The Toolkit is provided "as is," for educational purposes only, and is not
+  financial, tax, or legal advice. Use at your own risk.
+
+Purchased from Hustle&Handoff on Etsy? Thank you for supporting an independent
+creator.
+
+© 2026 Hustle&Handoff · All Rights Reserved
