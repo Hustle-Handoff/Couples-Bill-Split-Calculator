@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Couples Bill-Split Calculator</title>
+<meta name="description" content="Split every bill by what each partner earns — fairly.">
+
+<!-- PWA / install -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#EF8E76">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bill Split">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coral:#E07A5F; --coral-deep:#CC6A4F; --coral-soft:#FCE9E1;
+    --ink:#3A3A3C; --body:#4E4E4E; --muted:#9B9B9B;
+    --paper:#FCEBE3; --card:#FFFFFF; --line:#F0DDD4;
+    --green:#8BA88F; --green-soft:#E8F0E9;
+    --purple:#9C8FB6; --purple-soft:#EDE9F3;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    font-family:'Lora',Georgia,serif; color:var(--body);
+    background:var(--paper); line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- header band ---------- */
+  header{
+    position:relative; overflow:hidden; color:#fff; text-align:center;
+    background:linear-gradient(150deg,#EF8E76 0%,#F3A189 45%,#F7BBA6 100%);
+    padding:calc(42px + env(safe-area-inset-top)) 24px 52px;
+  }
+  header .circ{position:absolute;border-radius:50%;background:rgba(255,255,255,.13);}
+  header .c1{width:200px;height:200px;top:-70px;left:-50px;}
+  header .c2{width:120px;height:120px;bottom:-50px;right:60px;background:rgba(255,255,255,.10);}
+  header .c3{width:60px;height:60px;top:40px;right:90px;background:rgba(255,255,255,.12);}
+  header .kicker{font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:5px;
+    font-size:11px;color:rgba(255,255,255,.85);position:relative;}
+  header h1{font-family:'Poppins',sans-serif;font-weight:700;font-size:33px;
+    letter-spacing:-.5px;margin:10px 0 8px;position:relative;line-height:1.1;}
+  header p{font-style:italic;font-size:16px;color:rgba(255,255,255,.92);position:relative;}
+  .install-btn{display:none;margin:16px auto 0;position:relative;
+    font-family:'Poppins',sans-serif;font-weight:600;font-size:13px;letter-spacing:.3px;
+    color:#fff;background:rgba(255,255,255,.20);border:1px solid rgba(255,255,255,.55);
+    padding:10px 20px;border-radius:30px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .install-btn:active{background:rgba(255,255,255,.32);}
+  .ios-hint{display:none;max-width:560px;margin:14px auto 0;position:relative;
+    background:rgba(255,255,255,.92);color:var(--ink);border-radius:14px;padding:13px 16px;
+    font-family:'Poppins',sans-serif;font-size:12.5px;line-height:1.5;text-align:left;}
+  .ios-hint b{color:var(--coral-deep);}
+  .ios-hint .x{float:right;cursor:pointer;color:var(--muted);font-size:16px;margin-left:8px;}
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:900px;margin:-26px auto 60px;padding:0 16px;position:relative;z-index:2;}
+  .card{background:var(--card);border-radius:22px;box-shadow:0 12px 40px rgba(200,110,80,.12);
+    padding:24px 24px;margin-bottom:20px;}
+  .label{font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:2.5px;
+    font-size:11px;color:var(--coral);text-transform:uppercase;margin-bottom:4px;}
+  h2{font-family:'Poppins',sans-serif;font-weight:700;color:var(--ink);font-size:20px;margin-bottom:4px;}
+  .sub{font-style:italic;color:var(--muted);font-size:13px;margin-bottom:18px;}
+
+  /* ---------- partner grid ---------- */
+  .partners{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .partner{border:1px solid var(--line);border-radius:16px;padding:18px;background:#FFFDFC;}
+  .partner .pname{width:100%;border:none;border-bottom:2px solid var(--coral-soft);
+    font-family:'Poppins',sans-serif;font-weight:700;font-size:17px;color:var(--ink);
+    padding:4px 2px 7px;margin-bottom:14px;background:transparent;outline:none;}
+  .partner .pname:focus{border-color:var(--coral);}
+
+  .seg{display:flex;background:var(--coral-soft);border-radius:10px;padding:3px;margin-bottom:14px;}
+  .seg button{flex:1;border:none;background:transparent;cursor:pointer;
+    font-family:'Poppins',sans-serif;font-weight:600;font-size:12.5px;color:var(--coral-deep);
+    padding:9px 4px;border-radius:8px;transition:.15s;-webkit-tap-highlight-color:transparent;}
+  .seg button.active{background:var(--coral);color:#fff;box-shadow:0 2px 8px rgba(200,110,80,.3);}
+
+  .field{margin-bottom:12px;}
+  .field label{font-family:'Poppins',sans-serif;font-weight:500;font-size:12px;color:var(--ink);
+    display:block;margin-bottom:5px;}
+  .inwrap{position:relative;}
+  .inwrap .pre{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    color:var(--muted);font-family:'Poppins',sans-serif;font-size:13px;}
+  .field input.num{width:100%;border:1px solid var(--line);border-radius:10px;
+    padding:11px 12px 11px 24px;font-family:'Poppins',sans-serif;font-size:15px;color:var(--ink);
+    outline:none;background:#fff;}
+  .field input.num.nopre{padding-left:12px;}
+  .field input.num:focus{border-color:var(--coral);}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  .ptot{margin-top:14px;padding-top:13px;border-top:1px dashed var(--line);}
+  .ptot .row{display:flex;justify-content:space-between;align-items:baseline;}
+  .ptot .k{font-family:'Poppins',sans-serif;font-size:12px;color:var(--muted);}
+  .ptot .mo{font-family:'Poppins',sans-serif;font-weight:700;font-size:22px;color:var(--coral);}
+  .ptot .share{font-family:'Poppins',sans-serif;font-weight:600;font-size:13px;color:var(--green);}
+
+  /* ---------- method toggle ---------- */
+  .method{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px;}
+  .method .seg{margin:0;max-width:320px;flex:1;min-width:240px;}
+  .method .hint{font-style:italic;font-size:12.5px;color:var(--muted);flex:1;min-width:200px;}
+
+  /* ---------- bills table ---------- */
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;border-collapse:collapse;min-width:540px;}
+  thead th{background:var(--coral);color:#fff;font-family:'Poppins',sans-serif;font-weight:600;
+    font-size:11.5px;letter-spacing:.3px;text-align:left;padding:11px 12px;}
+  thead th:first-child{border-top-left-radius:12px;}
+  thead th:last-child{border-top-right-radius:12px;text-align:center;width:44px;}
+  thead th.amtcol,thead th.paycol{text-align:right;}
+  tbody td{border-bottom:1px solid var(--line);padding:8px 12px;vertical-align:middle;}
+  tbody tr:nth-child(odd) td{background:#FCF6F3;}
+  td input.bname{width:100%;border:none;background:transparent;font-family:'Lora',serif;
+    font-size:14px;color:var(--ink);outline:none;padding:4px 2px;}
+  td input.bname:focus{border-bottom:1px solid var(--coral);}
+  td .amtin{position:relative;display:inline-block;}
+  td .amtin .pre{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:'Poppins',sans-serif;font-size:12px;}
+  td input.bamt{width:112px;border:1px solid var(--line);border-radius:8px;padding:9px 8px 9px 19px;
+    font-family:'Poppins',sans-serif;font-size:14px;text-align:right;color:var(--ink);outline:none;background:#fff;}
+  td input.bamt:focus{border-color:var(--coral);}
+  td.pay{font-family:'Poppins',sans-serif;font-weight:600;font-size:13.5px;text-align:right;color:var(--coral-deep);white-space:nowrap;}
+  td.payB{color:var(--purple);}
+  td.amtcell{text-align:right;}
+  .del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:6px;border-radius:6px;-webkit-tap-highlight-color:transparent;}
+  .del:active{color:var(--coral);background:var(--coral-soft);}
+
+  .addbtn{margin-top:16px;border:2px dashed var(--coral);background:var(--coral-soft);
+    color:var(--coral-deep);font-family:'Poppins',sans-serif;font-weight:600;font-size:14px;
+    padding:13px 18px;border-radius:12px;cursor:pointer;width:100%;transition:.15s;-webkit-tap-highlight-color:transparent;}
+  .addbtn:active{background:#FBDFD5;}
+
+  /* ---------- totals ---------- */
+  .totals{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .tcard{border-radius:16px;padding:18px 20px;}
+  .tcard.a{background:var(--coral-soft);}
+  .tcard.b{background:var(--purple-soft);}
+  .tcard .who{font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:var(--ink);margin-bottom:10px;}
+  .tcard .big{font-family:'Poppins',sans-serif;font-weight:700;font-size:30px;line-height:1;}
+  .tcard.a .big{color:var(--coral);}
+  .tcard.b .big{color:var(--purple);}
+  .tcard .cap{font-family:'Poppins',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);
+    text-transform:uppercase;margin-top:4px;}
+  .tcard .line{display:flex;justify-content:space-between;font-family:'Poppins',sans-serif;
+    font-size:12.5px;margin-top:12px;padding-top:11px;border-top:1px dashed rgba(0,0,0,.10);color:var(--ink);}
+  .tcard .line .v{font-weight:700;}
+  .tcard .warn{color:#C0492F;}
+  .grand{text-align:center;margin-top:18px;font-family:'Poppins',sans-serif;}
+  .grand .gk{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+  .grand .gv{font-size:26px;font-weight:700;color:var(--ink);margin-top:2px;}
+
+  .call{background:var(--green-soft);border-left:5px solid var(--green);border-radius:12px;
+    padding:14px 16px;margin-top:6px;}
+  .call .cl{font-family:'Poppins',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:2px;
+    color:#5f7e69;text-transform:uppercase;margin-bottom:5px;}
+  .call .cb{font-size:12.5px;line-height:1.55;}
+  footer{max-width:900px;margin:0 auto 50px;padding:0 28px calc(10px + env(safe-area-inset-bottom));text-align:center;}
+  footer .note{font-style:italic;font-size:11.5px;color:var(--muted);line-height:1.6;}
+  footer .sig{font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:2px;font-size:10px;
+    color:var(--coral);text-transform:uppercase;margin-top:14px;opacity:.8;}
+
+  /* ============ MOBILE ============ */
+  @media (max-width:640px){
+    header h1{font-size:26px;}
+    header p{font-size:14px;}
+    .wrap{padding:0 12px;}
+    .card{padding:20px 18px;border-radius:18px;}
+    .partners{grid-template-columns:1fr;}
+    .totals{grid-template-columns:1fr;}
+    /* prevent iOS zoom-on-focus: inputs >= 16px */
+    .field input.num, td input.bamt, td input.bname, .partner .pname{font-size:16px;}
+    /* bills table -> stacked cards */
+    .tablewrap{overflow:visible;}
+    table{min-width:0;}
+    thead{display:none;}
+    tbody, tbody tr, tbody td{display:block;width:100%;}
+    tbody tr, tbody tr:nth-child(odd) td{background:transparent;}
+    tbody tr{border:1px solid var(--line);border-radius:14px;padding:6px 14px 12px;margin-bottom:14px;background:#FFFDFC;position:relative;}
+    tbody td{border:none;padding:9px 0;display:flex;justify-content:space-between;align-items:center;gap:14px;}
+    tbody td::before{content:attr(data-label);font-family:'Poppins',sans-serif;font-weight:600;
+      font-size:12px;color:var(--muted);}
+    td.namecell{padding:6px 36px 9px 0;border-bottom:1px solid var(--line);margin-bottom:4px;}
+    td.namecell::before{display:none;}
+    td.namecell input.bname{font-weight:700;}
+    td.amtcell{text-align:left;}
+    td input.bamt{width:130px;}
+    td.pay{font-size:15px;}
+    td.delcell{position:absolute;top:8px;right:8px;padding:0;}
+    td.delcell::before{display:none;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="circ c1"></span><span class="circ c2"></span><span class="circ c3"></span>
+  <div class="kicker">A MONEY TOOL FOR TWO</div>
+  <h1>The Couples Bill-Split Calculator</h1>
+  <p>Split every bill by what each of you actually earns &mdash; fairly.</p>
+  <button class="install-btn" id="installBtn">&#8595; Install app</button>
+  <div class="ios-hint" id="iosHint">
+    <span class="x" id="iosX">&times;</span>
+    To install: tap the <b>Share</b> icon, then <b>Add to Home Screen</b>.
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- INCOMES -->
+  <div class="card">
+    <div class="label">Step 1</div>
+    <h2>Your Incomes</h2>
+    <div class="sub">Enter each income as an hourly wage or a yearly salary. We&rsquo;ll work out the monthly figures.</div>
+    <div class="partners" id="partners"></div>
+    <div class="ptot" style="border-top:none;padding-top:18px;margin-top:6px;">
+      <div class="method">
+        <div class="seg" id="methodSeg">
+          <button data-method="prop" class="active">Proportional split</button>
+          <button data-method="equal">50 / 50 split</button>
+        </div>
+        <div class="hint" id="methodHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BILLS -->
+  <div class="card">
+    <div class="label">Step 2</div>
+    <h2>Your Monthly Bills</h2>
+    <div class="sub">Add every shared monthly bill. Each one is split automatically using the method above.</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Bill</th>
+          <th class="amtcol">Monthly amount</th>
+          <th class="paycol" id="thA">Partner A pays</th>
+          <th class="paycol" id="thB">Partner B pays</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="billBody"></tbody>
+      </table>
+    </div>
+    <button class="addbtn" id="addBill">+ Add a bill</button>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="card">
+    <div class="label">Step 3</div>
+    <h2>What Each of You Pays</h2>
+    <div class="sub">Your fair share of the shared bills, and what is left of each monthly income afterward.</div>
+    <div class="totals">
+      <div class="tcard a">
+        <div class="who" id="whoA">Partner A</div>
+        <div class="big" id="payA">$0</div>
+        <div class="cap">Toward shared bills each month</div>
+        <div class="line"><span>Share of bills</span><span class="v" id="pctA">0%</span></div>
+        <div class="line"><span>Left after shared bills</span><span class="v" id="leftA">$0</span></div>
+      </div>
+      <div class="tcard b">
+        <div class="who" id="whoB">Partner B</div>
+        <div class="big" id="payB">$0</div>
+        <div class="cap">Toward shared bills each month</div>
+        <div class="line"><span>Share of bills</span><span class="v" id="pctB">0%</span></div>
+        <div class="line"><span>Left after shared bills</span><span class="v" id="leftB">$0</span></div>
+      </div>
+    </div>
+    <div class="grand">
+      <div class="gk">Total shared bills</div>
+      <div class="gv" id="grand">$0</div>
+    </div>
+    <div class="call">
+      <div class="cl">Fair is not always equal</div>
+      <div class="cb" id="calloutBody"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="note">This tool is for educational planning only and is not financial advice. It works from <b>gross</b> income (before taxes and deductions); your actual take-home pay will be lower, so treat the results as a starting point for the conversation. Every couple is different &mdash; use whatever split you both agree feels fair.</div>
+  <div class="sig">The Couples Money Playbook</div>
+</footer>
+
+<script>
+(function(){
+  var partners = [
+    { name:"Partner A", type:"salary", rate:25, hours:40, salary:60000 },
+    { name:"Partner B", type:"hourly", rate:22, hours:40, salary:45000 }
+  ];
+  var bills = [
+    { name:"Rent / Mortgage", amount:1800 },
+    { name:"Utilities", amount:180 },
+    { name:"Groceries", amount:600 },
+    { name:"Internet & Phone", amount:150 },
+    { name:"Transportation", amount:300 }
+  ];
+  var method = "prop";
+
+  function money(n){ if(!isFinite(n)) n=0; return "$"+n.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function money2(n){ if(!isFinite(n)) n=0; return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function monthly(p){ if(p.type==="hourly"){ return (Number(p.rate)||0)*(Number(p.hours)||0)*52/12; } return (Number(p.salary)||0)/12; }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  function renderPartners(){
+    var host=document.getElementById("partners"); host.innerHTML="";
+    partners.forEach(function(p,i){
+      var div=document.createElement("div"); div.className="partner";
+      div.innerHTML=
+        '<input class="pname" value="'+esc(p.name)+'" data-i="'+i+'" aria-label="Partner name">'+
+        '<div class="seg" data-i="'+i+'">'+
+          '<button data-type="hourly" class="'+(p.type==="hourly"?"active":"")+'">Hourly</button>'+
+          '<button data-type="salary" class="'+(p.type==="salary"?"active":"")+'">Salary</button>'+
+        '</div>'+
+        (p.type==="hourly"
+          ? '<div class="two">'+
+              '<div class="field"><label>Hourly rate</label><div class="inwrap"><span class="pre">$</span><input class="num rate" type="number" inputmode="decimal" min="0" step="0.5" value="'+p.rate+'" data-i="'+i+'"></div></div>'+
+              '<div class="field"><label>Hours / week</label><div class="inwrap"><input class="num nopre hours" type="number" inputmode="numeric" min="0" step="1" value="'+p.hours+'" data-i="'+i+'"></div></div>'+
+            '</div>'
+          : '<div class="field"><label>Annual salary</label><div class="inwrap"><span class="pre">$</span><input class="num salary" type="number" inputmode="numeric" min="0" step="500" value="'+p.salary+'" data-i="'+i+'"></div></div>'
+        )+
+        '<div class="ptot">'+
+          '<div class="row"><span class="k">Monthly income</span><span class="mo" id="mo'+i+'">$0</span></div>'+
+          '<div class="row"><span class="k">Share of combined</span><span class="share" id="sh'+i+'">0%</span></div>'+
+        '</div>';
+      host.appendChild(div);
+    });
+  }
+
+  function renderBills(){
+    var body=document.getElementById("billBody"); body.innerHTML="";
+    bills.forEach(function(b,i){
+      var tr=document.createElement("tr");
+      tr.innerHTML=
+        '<td class="namecell"><input class="bname" value="'+esc(b.name)+'" data-i="'+i+'" placeholder="Bill name"></td>'+
+        '<td class="amtcell" data-label="Monthly amount"><span class="amtin"><span class="pre">$</span><input class="bamt" type="number" inputmode="decimal" min="0" step="10" value="'+b.amount+'" data-i="'+i+'"></span></td>'+
+        '<td class="pay payA" data-label="Partner A pays" id="ba'+i+'">$0</td>'+
+        '<td class="pay payB" data-label="Partner B pays" id="bb'+i+'">$0</td>'+
+        '<td class="delcell"><button class="del" data-i="'+i+'" title="Remove" aria-label="Remove bill">&times;</button></td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function recompute(){
+    var mA=monthly(partners[0]), mB=monthly(partners[1]);
+    var combined=mA+mB;
+    var shA=combined>0?mA/combined:0.5, shB=combined>0?mB/combined:0.5;
+    document.getElementById("mo0").textContent=money(mA);
+    document.getElementById("mo1").textContent=money(mB);
+    document.getElementById("sh0").textContent=combined>0?Math.round(shA*100)+"%":"\u2014";
+    document.getElementById("sh1").textContent=combined>0?Math.round(shB*100)+"%":"\u2014";
+
+    var nameA=partners[0].name||"Partner A", nameB=partners[1].name||"Partner B";
+    document.getElementById("thA").textContent=nameA+" pays";
+    document.getElementById("thB").textContent=nameB+" pays";
+    document.getElementById("whoA").textContent=nameA;
+    document.getElementById("whoB").textContent=nameB;
+
+    var fracA=(method==="equal")?0.5:shA, fracB=(method==="equal")?0.5:shB;
+    var total=0,totA=0,totB=0;
+    bills.forEach(function(b,i){
+      var amt=Number(b.amount)||0, pa=amt*fracA, pb=amt*fracB;
+      total+=amt; totA+=pa; totB+=pb;
+      var ea=document.getElementById("ba"+i), eb=document.getElementById("bb"+i);
+      if(ea){ ea.textContent=money2(pa); ea.setAttribute("data-label",nameA+" pays"); }
+      if(eb){ eb.textContent=money2(pb); eb.setAttribute("data-label",nameB+" pays"); }
+    });
+
+    document.getElementById("payA").textContent=money(totA);
+    document.getElementById("payB").textContent=money(totB);
+    document.getElementById("grand").textContent=money(total);
+
+    var pctA=mA>0?Math.round(totA/mA*100):0, pctB=mB>0?Math.round(totB/mB*100):0;
+    var elPctA=document.getElementById("pctA"), elPctB=document.getElementById("pctB");
+    elPctA.textContent=mA>0?pctA+"% of income":"\u2014";
+    elPctB.textContent=mB>0?pctB+"% of income":"\u2014";
+    elPctA.className="v"+(pctA>100?" warn":""); elPctB.className="v"+(pctB>100?" warn":"");
+
+    var leftA=mA-totA, leftB=mB-totB;
+    var elLA=document.getElementById("leftA"), elLB=document.getElementById("leftB");
+    elLA.textContent=money(leftA); elLB.textContent=money(leftB);
+    elLA.className="v"+(leftA<0?" warn":""); elLB.className="v"+(leftB<0?" warn":"");
+
+    document.getElementById("calloutBody").innerHTML=(method==="equal")
+      ? "A 50/50 split divides every bill straight down the middle. Simple &mdash; but when incomes differ, it can leave the lower earner stretched while the higher earner barely notices."
+      : "When incomes differ, a proportional split keeps both partners feeling the household costs equally &mdash; the higher earner pays more dollars, but the same share of income.";
+  }
+
+  function paintMethodHint(){
+    document.getElementById("methodHint").innerHTML=(method==="equal")
+      ? "Each partner pays <b>half of every bill</b>, regardless of income."
+      : "Each partner pays the same <b>share of their income</b>, so a bill feels equally light or heavy for both.";
+  }
+
+  document.getElementById("partners").addEventListener("input",function(e){
+    var t=e.target,i=+t.getAttribute("data-i");
+    if(t.classList.contains("pname")) partners[i].name=t.value;
+    else if(t.classList.contains("rate")) partners[i].rate=t.value;
+    else if(t.classList.contains("hours")) partners[i].hours=t.value;
+    else if(t.classList.contains("salary")) partners[i].salary=t.value;
+    recompute();
+  });
+  document.getElementById("partners").addEventListener("click",function(e){
+    var b=e.target.closest("button[data-type]"); if(!b) return;
+    var i=+b.parentNode.getAttribute("data-i");
+    partners[i].type=b.getAttribute("data-type");
+    renderPartners(); recompute();
+  });
+  document.getElementById("methodSeg").addEventListener("click",function(e){
+    var b=e.target.closest("button[data-method]"); if(!b) return;
+    method=b.getAttribute("data-method");
+    [].forEach.call(this.children,function(c){c.classList.toggle("active",c===b);});
+    paintMethodHint(); recompute();
+  });
+  var billBody=document.getElementById("billBody");
+  billBody.addEventListener("input",function(e){
+    var t=e.target,i=+t.getAttribute("data-i");
+    if(t.classList.contains("bname")) bills[i].name=t.value;
+    else if(t.classList.contains("bamt")) bills[i].amount=t.value;
+    recompute();
+  });
+  billBody.addEventListener("click",function(e){
+    var d=e.target.closest(".del"); if(!d) return;
+    bills.splice(+d.getAttribute("data-i"),1); renderBills(); recompute();
+  });
+  document.getElementById("addBill").addEventListener("click",function(){
+    bills.push({name:"",amount:0}); renderBills(); recompute();
+  });
+
+  renderPartners(); renderBills(); paintMethodHint(); recompute();
+
+  /* ---------- PWA: install button + service worker ---------- */
+  var installBtn=document.getElementById("installBtn");
+  var iosHint=document.getElementById("iosHint");
+  var deferred=null;
+  window.addEventListener("beforeinstallprompt",function(e){
+    e.preventDefault(); deferred=e;
+    installBtn.style.display="inline-block";
+    installBtn.innerHTML="&#8595; Install app";
+  });
+  installBtn.addEventListener("click",function(){
+    if(deferred){ deferred.prompt(); deferred.userChoice.then(function(){ deferred=null; installBtn.style.display="none"; }); }
+    else { iosHint.style.display = (iosHint.style.display==="block"?"none":"block"); }
+  });
+  document.getElementById("iosX").addEventListener("click",function(){ iosHint.style.display="none"; });
+  window.addEventListener("appinstalled",function(){ installBtn.style.display="none"; iosHint.style.display="none"; });
+
+  var isIos=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  var standalone=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone;
+  if(isIos && !standalone){ installBtn.style.display="inline-block"; installBtn.innerHTML="&#8595; Add to Home Screen"; }
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+  }
+})();
+</script>
+</body>
+</html>
